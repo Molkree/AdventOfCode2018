@@ -11,6 +11,8 @@
 #include <map>
 #include <limits>
 #include <chrono>
+#include <set>
+#include <unordered_set>
 
 using namespace std;
 
@@ -400,6 +402,58 @@ void day6()
     cout << "Day 6 part 2 = " << safe_area << endl;
 }
 
+string day7_file = "day7_input.txt";
+void day7()
+{
+    unordered_map<char, bool> is_root;
+    unordered_map<char, set<char>> graph;
+    unordered_map<char, set<char>> parents;
+
+    ifstream infile(day7_file);
+    string line;
+    while (getline(infile, line))
+    {
+        const char parent = line.at(5), child = line.at(36);
+        if (is_root.find(parent) == is_root.end())
+            is_root[parent] = true;
+        is_root[child] = false;
+        parents[child].emplace(parent);
+        graph[parent].insert(child);
+    }
+
+    set<char> nodes;
+    for (auto node : is_root)
+        if (node.second)
+        {
+            nodes.emplace(node.first);
+            parents[node.first] = set<char>();
+        }
+    vector<char> output;
+    unordered_set<char> used;
+    while (!nodes.empty())
+    {
+        auto next_node = nodes.cbegin();
+        while (!parents[*next_node].empty())
+        {
+            ++next_node;
+        }
+        used.emplace(*next_node);
+        output.emplace_back(*next_node);
+        for (auto it = graph[*next_node].cbegin(); it != graph[*next_node].cend(); ++it)
+        {
+            if (used.find(*it) == used.cend())
+                nodes.emplace(*it);
+            parents[*it].erase(parents[*it].find(*next_node));
+        }
+        nodes.erase(next_node);
+    }
+
+    cout << "Day 7 part 1 = ";
+    for (const char node : output)
+        cout << node;
+    cout << endl;
+}
+
 int main()
 {
     auto start = chrono::steady_clock::now();
@@ -410,7 +464,8 @@ int main()
     //day3_part2();
     //day4();
     //day5();
-    day6();
+    //day6();
+    day7();
     auto duration = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - start);
     cout << "Elapsed time: " << duration.count() / 1000.0 << "s\n";
 }
